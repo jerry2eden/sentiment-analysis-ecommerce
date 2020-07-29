@@ -37,6 +37,7 @@ score_map = {
 }
 df['label'] = df['review_score'].map(score_map)
 df['target'] = df['label'].apply(lambda x: 1 if x == 'positive' else 0)
+df.to_csv('../../data/train_data.csv', index=False, sep=';', encoding='utf-8')
 
 # Building a prep pipeline
 # Defining regex transformers to be applied
@@ -96,7 +97,7 @@ clf_tool.fit(set_classifiers, X_train, y_train, random_search=True, scoring='acc
 # Evaluating metrics
 df_performances = clf_tool.evaluate_performance(X_train, y_train, X_test, y_test, cv=5)
 df_performances.reset_index(drop=True).style.background_gradient(cmap='Blues')
-df_performances.to_csv('results/model_performance.csv', index=False)
+df_performances.to_csv('metrics/model_performance.csv', index=False)
 
 # Saving the LogisticRegression model (already analyzed on jupyter notebook)
 model = clf_tool.classifiers_info['LogisticRegression']['estimator']

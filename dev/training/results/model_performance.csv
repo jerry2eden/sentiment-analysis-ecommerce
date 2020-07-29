@@ -1,3 +1,0 @@
-model,approach,acc,precision,recall,f1,auc,total_time
-LogisticRegression,Treino 5 K-folds,0.8841,0.9216,0.919,0.9203,0.9426,5.812
-LogisticRegression,Teste,0.8834,0.9219,0.9161,0.919,0.943,0.022
