@@ -4,9 +4,6 @@ the prediction probability
 """
 
 # Importing libraries
-from utils.text_utils import re_breakline, re_dates, re_hiperlinks, re_money, re_negation, re_numbers, \
-    re_special_chars, re_whitespaces, ApplyRegex, StemmingProcess, \
-    StopWordsRemoval, TextFeatureExtraction
 from joblib import load
 from pandas import DataFrame
 import pandas as pd
@@ -17,10 +14,11 @@ from datetime import datetime
 # Building up the class Sentimentor
 class Sentimentor():
 
-    def __init__(self, data):
+    def __init__(self, data, pipeline_path='../pipeline/text_prep_pipeline.pkl',
+                 clf_path='../model/sentiment_classifier.pkl'):
         self.data = data
-        self.pipeline = load('../pipeline/text_prep_pipeline.pkl')
-        self.clf = load('../model/sentiment_classifier.pkl')
+        self.pipeline = load(pipeline_path)
+        self.clf = load(clf_path)
 
         # Change the status of train attribute from the pipeline's vectorizer
         self.pipeline.named_steps['text_features'].train = False
@@ -67,7 +65,7 @@ class Sentimentor():
         # Exporting results
         if export_results:
             now = datetime.now().strftime('%Y%m%d_%H%M%S')
-            df_results.to_csv(f'{export_path}{getuser()}_prediction_{now}.csv', index=False, sep=';')
+            df_results.to_csv(f'{export_path}{getuser()}_prediction_{now}.csv', index=False, sep=';', encoding='UTF-16')
 
         return df_results
 
@@ -75,7 +73,7 @@ class Sentimentor():
 if __name__ == '__main__':
     # Instancing an object and executing predictions
     text_input = 'Não gostei do produto e achei caro. PAguei R$99,00 reais por algo de baixa qualidade'
-    #text_input = pd.read_csv('../data/train_data.csv', sep=';', usecols=['review_comment_message'])
+    text_input = pd.read_csv('../data/train_data.csv', sep=';', usecols=['review_comment_message'])
     sentimentor = Sentimentor(data=text_input)
 
     # Calling the method for preparing the input whatever its type
