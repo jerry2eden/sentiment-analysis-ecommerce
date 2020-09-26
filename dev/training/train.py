@@ -1,5 +1,5 @@
 """
-This python script are responsible for reading, preparing and training a sentiment classification model from
+This python script is responsible for reading, preparing and training a sentiment classification model from
 e-commerce reviews taken from brazilian web-sites
 
 * Metadata can be find at: https://www.kaggle.com/olistbr/brazilian-ecommerce
