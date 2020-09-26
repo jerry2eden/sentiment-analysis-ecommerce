@@ -9,19 +9,12 @@ and handle some common exceptions that we can face on production
 --- SUMMARY ---
 
 1. Project Variables
-2. Reading Data
-3. Prep Pipelines
-    3.1 Initial Preparation
-    3.2 Text Transformers
-4. Modeling
-    4.1 Model Training
-    4.2 Evaluating Metrics
-    4.3 Complete Solution
-    4.4 Final Model Performance
-    4.5 Saving pkl Files
+2. Sentimentor Class
+3. Main Program
+    3.1 Making Predictions on Text
 
 ---------------------------------------------------------------
-Written by Thiago Panini - Latest version: September 25th 2020
+Written by Thiago Panini - Latest version: September 26th 2020
 ---------------------------------------------------------------
 """
 
@@ -43,14 +36,21 @@ from datetime import datetime
 # Variables for path address
 PIPE_PATH = '../pipelines'
 MODEL_PATH = '../models'
-LOG_PATH = '../log_results/'
+LOG_PATH = '../log_results'
 
 # Variables for pkl files
 E2E_PIPE = 'text_prep_pipeline.pkl'
 MODEL = 'sentiment_clf_model.pkl'
+ALL_LOG_FILE = 'sentimentor_predictions.csv'
 
 
-# Building up the class Sentimentor
+"""
+-----------------------------------
+------ 2. SENTIMENTOR CLASS -------
+-----------------------------------
+"""
+
+
 class Sentimentor():
 
     def __init__(self, data):
@@ -58,13 +58,25 @@ class Sentimentor():
         self.pipeline = load(os.path.join(PIPE_PATH, E2E_PIPE))
         self.model = load(os.path.join(MODEL_PATH, MODEL))
 
-        # Change the status of train attribute from the pipeline's vectorizer
-        #self.pipeline.named_steps['text_features'].train = False
-
     def prep_input(self):
         """
-        Takes an inputs (string or list) and applies the prep pipeline
-        :return: updating the self.data attribute from the class
+        This method uses the self.data attribute to make modifications on input text dtype in order to make it
+        applicable to the text prep pipeline (self.pipeline attribute)
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        :return: text_prep: input data after pipeline transform method [type: depends on input]
+
+        Application
+        -----------
+        # Preparing the input data for making predictions
+        text_input = 'some review or comment extracted online'
+        sentimentor = Sentimentor(data=text_input)
+        text_prep = sentimentor.prep_input()
         """
 
         # Verify if the type of input data
@@ -78,8 +90,16 @@ class Sentimentor():
 
     def make_predictions(self, export_results=False, export_path=LOG_PATH):
         """
-        Takes the data input, applies the pipeline and the classifier model to return the sentiment
-        :return:
+        This method is used for consuming the sentiment classification model and export results on demand
+
+        Parameters
+        ----------
+        :param export_results: flag that guides exporting a csv file with predictions [type: bool, default: False]
+        :param export_path: referente for storing the results [type: string, default: '../log_results']
+
+        Returns
+        -------
+        :return: df_results: DataFrame with sentiment predictions for the given input [type: pd.DataFrame]
         """
 
         # Preparing the data and calling the classifier for making predictions
@@ -93,6 +113,7 @@ class Sentimentor():
 
         # Building up a pandas DataFrame to delivery the results
         results = {
+            'datetime_prediction': datetime.now().strftime('%Y%m%d_%H%M%S'),
             'text_input': self.data,
             'prediction': pred,
             'class_sentiment': class_sentiment,
@@ -103,16 +124,34 @@ class Sentimentor():
         # Exporting results
         if export_results:
             now = datetime.now().strftime('%Y%m%d_%H%M%S')
-            df_results.to_csv(f'{export_path}{getuser()}_prediction_{now}.csv', index=False, sep=';', encoding='UTF-16')
+            filename = str(getuser()) + '_prediction_' + str(now) + '.csv'
+            df_results.to_csv(os.path.join(export_path, filename), index=False, sep=';', encoding='UTF-16')
+
+            # Storing results in an unique file
+            try:
+                sentimentor_predictions = pd.read_csv(os.path.join(export_path, ALL_LOG_FILE))
+                sentimentor_predictions = sentimentor_predictions.append(df_results)
+                sentimentor_predictions.to_csv(os.path.join(export_path, ALL_LOG_FILE))
+            except FileNotFoundError:
+                # File log doesn't exists, creating one
+                df_results.to_csv(os.path.join(export_path, ALL_LOG_FILE), index=False)
 
         return df_results
 
 
+"""
+-----------------------------------
+--------- 3. MAIN PROGRAM ---------
+  3.1 Making Predictions on Text
+-----------------------------------
+"""
+
+
 if __name__ == '__main__':
     # Instancing an object and executing predictions
-    text_input = 'Adorei O PRODUT0, me atendeu perfeitamente e pretendo adquirir mais itens nessa loja'
-    test_input = pd.read_csv('test_data.csv', sep=';')
-    sentimentor = Sentimentor(data=test_input)
+    #text_input = 'Adorei O PRODUT0, me atendeu perfeitamente e pretendo adquirir mais itens nessa loja'
+    text_input = pd.read_csv('test_data.csv', sep=';')
+    sentimentor = Sentimentor(data=text_input)
 
     # Calling the method for preparing the input whatever its type
     output = sentimentor.make_predictions(export_results=True)
